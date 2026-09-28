@@ -29,10 +29,16 @@ export type BlurViewProps = ViewProps & {
   blurType?: BlurType;
   blurAmount?: number;
   reducedTransparencyFallbackColor?: string;
+  // Android-only; accepted here so callers can pass one `target` prop across
+  // platforms. iOS blurs everything behind it natively and ignores this.
+  target?: React.RefObject<View>;
 };
 
 const BlurView = forwardRef<View, BlurViewProps>(
-  ({ blurType = 'dark', blurAmount = 10, style, ...rest }, ref) => (
+  (
+    { blurType = 'dark', blurAmount = 10, target: _target, style, ...rest },
+    ref
+  ) => (
     <NativeBlurView
       ref={ref}
       style={StyleSheet.compose(styles.transparent, style)}

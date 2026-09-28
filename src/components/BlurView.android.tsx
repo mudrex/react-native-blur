@@ -1,7 +1,8 @@
-import React, { forwardRef, useEffect } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import {
   View,
   DeviceEventEmitter,
+  findNodeHandle,
   StyleSheet,
   ViewProps,
   ViewStyle,
@@ -15,6 +16,10 @@ const OVERLAY_COLORS = {
 };
 
 export type BlurViewProps = ViewProps & {
+  // Android needs the content to blur wrapped in a <BlurTarget>; pass a ref
+  // to it here, or blurring silently stays off. See the README's Android
+  // migration note.
+  target?: React.RefObject<View>;
   blurAmount?: number;
   blurType?: 'dark' | 'light' | 'xlight';
   blurRadius?: number;
@@ -27,6 +32,7 @@ export type BlurViewProps = ViewProps & {
 const BlurView = forwardRef<View, BlurViewProps>(
   (
     {
+      target,
       downsampleFactor,
       blurRadius,
       blurAmount = 10,
@@ -40,6 +46,18 @@ const BlurView = forwardRef<View, BlurViewProps>(
     },
     ref
   ) => {
+    const [targetId, setTargetId] = useState<number | undefined>(undefined);
+
+    useEffect(() => {
+      const id = target?.current ? findNodeHandle(target.current) : null;
+      setTargetId(id ?? undefined);
+      if (__DEV__ && id == null) {
+        console.warn(
+          '[ReactNativeBlur] BlurView requires a "target" prop referencing a mounted <BlurTarget> on Android.'
+        );
+      }
+    }, [target]);
+
     useEffect(() => {
       DeviceEventEmitter.addListener('ReactNativeBlurError', (message) => {
         throw new Error(`[ReactNativeBlur]: ${message}`);
@@ -97,6 +115,7 @@ const BlurView = forwardRef<View, BlurViewProps>(
         blurType={blurType}
         enabled={enabled}
         autoUpdate={autoUpdate}
+        targetId={targetId}
         pointerEvents="none"
         style={StyleSheet.compose(styles.transparent, style)}
       >

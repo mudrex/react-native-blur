@@ -2,7 +2,7 @@
  * Basic [iOS] Example for react-native-blur
  * https://github.com/react-native-community/react-native-blur
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Image,
   StyleSheet,
@@ -17,6 +17,7 @@ import SegmentedControl from '@react-native-community/segmented-control'; // Not
 
 import {
   BlurView,
+  BlurTarget,
   VibrancyView,
   BlurViewProps,
 } from '@react-native-community/blur';
@@ -26,7 +27,7 @@ const blurTypeValues =
     ? ['xlight', 'light', 'dark', 'regular', 'prominent']
     : ['xlight', 'light', 'dark'];
 
-const Blurs = () => {
+const Blurs = ({ targetRef }: { targetRef: React.RefObject<View> }) => {
   const [blurBlurType, setBlurBlurType] =
     useState<BlurViewProps['blurType']>('light');
   const [blurActiveSegment, setBlurActiveSegment] = useState(1);
@@ -57,14 +58,16 @@ const Blurs = () => {
         {/*
              BlurView is supported on both iOS and Android.
              If you also need to support Android, the BlurView must be
-             absolutely positioned behind your unblurred views, and it
-             cannot contain any child views.
+             absolutely positioned behind your unblurred views, it cannot
+             contain any child views, and it needs a `target` prop pointing
+             at a <BlurTarget> wrapping the content to blur (see above).
            */}
         <BlurView
           blurType={blurBlurType}
           blurAmount={100}
           reducedTransparencyFallbackColor={'pink'}
           style={[styles.blurView]}
+          target={targetRef}
         />
         <Text style={[styles.text, { color: tintColor }]}>
           Blur component ({platform})
@@ -116,16 +119,28 @@ const Blurs = () => {
 
 const Example = () => {
   const [showBlurs, setShowBlurs] = React.useState(true);
+  const targetRef = useRef<View>(null);
+
+  const bgImage = (
+    <Image
+      source={require('./bgimage.jpeg')}
+      resizeMode="cover"
+      style={styles.img}
+    />
+  );
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('./bgimage.jpeg')}
-        resizeMode="cover"
-        style={styles.img}
-      />
+      {/*
+        BlurView on Android blurs a specific target instead of everything
+        behind it, so the content to blur must be wrapped in a BlurTarget.
+      */}
 
-      {showBlurs ? <Blurs /> : null}
+      <BlurTarget ref={targetRef} style={styles.img}>
+        {bgImage}
+      </BlurTarget>
+
+      {showBlurs ? <Blurs targetRef={targetRef} /> : null}
 
       <SafeAreaView style={styles.blurToggle}>
         <Switch
