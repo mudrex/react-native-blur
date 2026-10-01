@@ -71,6 +71,12 @@ class BlurViewManager extends ViewGroupManager<BlurView>
   }
 
   @Override
+  @ReactProp(name = "targetId", defaultInt = -1)
+  public void setTargetId(BlurView view, int targetId) {
+    BlurViewManagerImpl.setTargetId(view, (ThemedReactContext) view.getContext(), targetId);
+  }
+
+  @Override
   public void setBlurAmount(BlurView view, int value) {}
 
   @Override
